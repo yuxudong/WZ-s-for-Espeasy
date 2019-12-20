@@ -1,29 +1,5 @@
 //#ifdef USES_P172
-/*
 
-  This plug in is written by Dmitry (rel22 ___ inbox.ru)
-  Plugin is based upon SenseAir plugin by Daniel Tedenljung info__AT__tedenljungconsulting.com
-  Additional features based on https://geektimes.ru/post/285572/ by Gerben (infernix__AT__gmail.com)
-
-  This plugin reads the CO2 value from MH-Z19 NDIR Sensor
-
-  Pin-out:
-  Hd o
-  SR o   o PWM
-  Tx o   o AOT
-  Rx o   o GND
-  Vo o   o Vin
-  (bottom view)
-  Skipping pin numbers due to inconsistancies in individual data sheet revisions.
-  MHZ19:  Connection:
-  VCC     5 V
-  GND     GND
-  Tx      ESP8266 1st GPIO specified in Device-settings
-  Rx      ESP8266 2nd GPIO specified in Device-settings
-*/
-
-// Uncomment the following define to enable the detection range commands:
-//#define ENABLE_DETECTION_RANGE_COMMANDS
 
 #define PLUGIN_172
 #define PLUGIN_ID_172         172
@@ -36,26 +12,26 @@
 
 #include <ESPeasySerial.h>
 
-/* �����ϴ�ģʽ
+/* 主动上传
  * /---------+---------+---------+---------+---------+---------+---------+---------+---------\
  * | Byte 0  | Byte 1  | Byte 2  | Byte 3  | Byte 4  | Byte 5  | Byte 6  | Byte 7  | Byte 8  |
  * |---------+---------+---------+---------+---------+---------+---------+---------+---------|
- * | Start   |  ����   |  ��λ   | С����  |����Ũ�� |����Ũ�� | ������  | ������  | Checksum|
- * | Byte    |  ����   |         |  λ��   |  ��λ   |  ��λ   |  ��λ   |  ��λ   |         |
+ * | Start   |  气体   |  单位   |小数位数 |气体浓度 |气体浓度 | 满量程  | 满量程  | Checksum|
+ * | Byte    |  名称   |         |    无   |  高位   |  低位   |  高位   |  低位   |         |
  * |---------+---------+---------+---------+---------+---------+---------+---------+---------|
  * | 0xFF    | 0x017   | ppb=0x04| 0x00    |  0x00   | 0x25    | 0x07    | 0xD0    | 0x25    |
  * \---------+---------+---------+---------+---------+---------+---------+---------+---------/
- * �ʴ�ģʽ
+ * 问答式
  * /---------+---------+---------+---------+---------+---------+---------+---------+---------\
  * | Byte 0  | Byte 1  | Byte 2  | Byte 3  | Byte 4  | Byte 5  | Byte 6  | Byte 7  | Byte 8  |
  * |---------+---------+---------+---------+---------+---------+---------+---------+---------|
- * | Start   |  ����   |����Ũ�� |����Ũ�� |  ����   |  ����   |����Ũ�� |����Ũ�� | Checksum|
- * | Byte    |         |��λug/m3|��λug/m3|         |         | ��λppb | ��λppb |         |
+ * | Start   |  命令   |气体浓度 |气体浓度 |  保留   |  保留   |气体浓度 |气体浓度 | Checksum|
+ * | Byte    |         |高位ug/m3|低位ug/m3|         |         | 高位ppb | 低位ppb |         |
  * |---------+---------+---------+---------+---------+---------+---------+---------+---------|
  * | 0xFF    | 0x86    | 0x00    | 0x2A    | 0x00    | 0x00    | 0x00    |  0x20   |  0x30   |
  * \---------+---------+---------+---------+---------+---------+---------+---------+---------/
- * ����Ũ��ֵ=����Ũ�ȸ�λ*256+����Ũ�ȵ�λ
- * Ũ�ȸ�λ��Ũ�ȵ�λ����16���ƻ���Ϊ10���ƺ��ڴ��뱾��ʽ����
+ * 气体浓度值=气体浓度高位*256+气体浓度低位
+ * 浓度高位和浓度低位需从16进制换算为10进制后再代入公式
  */
 
 struct P172_data_struct : public PluginTaskData_base {
